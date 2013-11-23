@@ -16,8 +16,8 @@ These commands will do the following actions:
 package stdservice
 
 import (
-	"bitbucket.org/kardianos/service"
 	"fmt"
+	"github.com/squishyent/service"
 	"os"
 )
 

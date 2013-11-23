@@ -1,8 +1,8 @@
 package service
 
 import (
-	"bitbucket.org/kardianos/osext"
 	"fmt"
+	"github.com/squishyent/osext"
 	"log/syslog"
 	"os"
 	"os/exec"

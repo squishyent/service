@@ -1,8 +1,8 @@
 package main
 
 import (
-	"bitbucket.org/kardianos/service"
 	"fmt"
+	"github.com/squishyent/service"
 	"os"
 )
 

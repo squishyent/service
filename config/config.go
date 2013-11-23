@@ -4,9 +4,9 @@
 package config
 
 import (
-	"bitbucket.org/kardianos/osext"
 	"code.google.com/p/go.exp/fsnotify"
 	"encoding/json"
+	"github.com/squishyent/osext"
 	"io"
 	"os"
 	"path/filepath"
