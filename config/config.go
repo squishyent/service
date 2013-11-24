@@ -4,8 +4,8 @@
 package config
 
 import (
-	"code.google.com/p/go.exp/fsnotify"
 	"encoding/json"
+	"github.com/squishyent/fsnotify"
 	"github.com/squishyent/osext"
 	"io"
 	"os"

@@ -8,18 +8,19 @@ import (
 	"github.com/squishyent/osext"
 )
 
-func newService(name, displayName, description string) (*windowsService, error) {
+func newService(name, displayName, description, exePath string) (*windowsService, error) {
 	return &windowsService{
 		name:        name,
 		displayName: displayName,
 		description: description,
+		exePath:     exePath,
 	}, nil
 }
 
 type windowsService struct {
-	name, displayName, description string
-	onStart, onStop                func() error
-	logger                         *eventlog.Log
+	name, displayName, description, exePath string
+	onStart, onStop                         func() error
+	logger                                  *eventlog.Log
 }
 
 func (ws *windowsService) Execute(args []string, r <-chan svc.ChangeRequest, changes chan<- svc.Status) (ssec bool, errno uint32) {
@@ -55,10 +56,14 @@ loop:
 }
 
 func (ws *windowsService) Install() error {
-	exepath, err := osext.Executable()
-	if err != nil {
-		return err
+	exepath := s.exePath
+	if exepath == "" {
+		exepath, err = osext.Executable()
+		if err != nil {
+			return err
+		}
 	}
+
 	m, err := mgr.Connect()
 	if err != nil {
 		return err

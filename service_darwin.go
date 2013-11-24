@@ -12,11 +12,12 @@ import (
 
 const maxPathSize = 32 * 1024
 
-func newService(name, displayName, description string) (s *darwinLaunchdService, err error) {
+func newService(name, displayName, description, exePath string) (s *darwinLaunchdService, err error) {
 	s = &darwinLaunchdService{
 		name:        name,
 		displayName: displayName,
 		description: description,
+		exePath:     exePath,
 	}
 
 	s.logger, err = syslog.New(syslog.LOG_INFO, name)
@@ -28,8 +29,8 @@ func newService(name, displayName, description string) (s *darwinLaunchdService,
 }
 
 type darwinLaunchdService struct {
-	name, displayName, description string
-	logger                         *syslog.Writer
+	name, displayName, description, exePath string
+	logger                                  *syslog.Writer
 }
 
 func (s *darwinLaunchdService) getServiceFilePath() string {
@@ -49,9 +50,12 @@ func (s *darwinLaunchdService) Install() error {
 	}
 	defer f.Close()
 
-	path, err := osext.Executable()
-	if err != nil {
-		return err
+	path := s.exePath
+	if path == "" {
+		path, err = osext.Executable()
+		if err != nil {
+			return err
+		}
 	}
 
 	var to = &struct {

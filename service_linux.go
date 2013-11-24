@@ -10,11 +10,12 @@ import (
 	"text/template"
 )
 
-func newService(name, displayName, description string) (s *linuxUpstartService, err error) {
+func newService(name, displayName, description, exePath string) (s *linuxUpstartService, err error) {
 	s = &linuxUpstartService{
 		name:        name,
 		displayName: displayName,
 		description: description,
+		exePath:     exePath,
 	}
 
 	s.logger, err = syslog.New(syslog.LOG_INFO, name)
@@ -26,8 +27,8 @@ func newService(name, displayName, description string) (s *linuxUpstartService, 
 }
 
 type linuxUpstartService struct {
-	name, displayName, description string
-	logger                         *syslog.Writer
+	name, displayName, description, exePath string
+	logger                                  *syslog.Writer
 }
 
 func (s *linuxUpstartService) Install() error {
@@ -43,9 +44,12 @@ func (s *linuxUpstartService) Install() error {
 	}
 	defer f.Close()
 
-	path, err := osext.Executable()
-	if err != nil {
-		return err
+	path := s.exePath
+	if path == "" {
+		path, err = osext.Executable()
+		if err != nil {
+			return err
+		}
 	}
 
 	var to = &struct {

@@ -7,9 +7,9 @@ import "github.com/squishyent/osext"
 // Creates a new service. name is the internal name
 // and should not contain spaces. Display name is the pretty print
 // name. The description is an arbitrary string used to describe the
-// service.
-func NewService(name, displayName, description string) (Service, error) {
-	return newService(name, displayName, description)
+// service. If exePath is empty, the path to the running binary will be used.
+func NewService(name, displayName, description, exePath string) (Service, error) {
+	return newService(name, displayName, description, exePath)
 }
 
 // Represents a generic way to interact with the system's service.

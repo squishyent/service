@@ -38,6 +38,9 @@ type Config struct {
 	// Init should not block.
 	Init func(c *Config) error
 
+	// The path to the executable.  If empty, the path of the running binary is used.
+	ExePath string
+
 	s service.Service
 	l service.Logger
 }
@@ -65,7 +68,7 @@ func Run(c *Config) {
 }
 
 func run(c *Config) {
-	var s, err = service.NewService(c.Name, c.DisplayName, c.LongDescription)
+	var s, err = service.NewService(c.Name, c.DisplayName, c.LongDescription, c.ExePath)
 	c.s = s
 	c.l = s
 
