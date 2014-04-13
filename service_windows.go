@@ -56,7 +56,8 @@ loop:
 }
 
 func (ws *windowsService) Install() error {
-	exepath := s.exePath
+	var err error
+	exepath := ws.exePath
 	if exepath == "" {
 		exepath, err = osext.Executable()
 		if err != nil {
