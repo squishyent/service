@@ -2,25 +2,24 @@ package service
 
 import (
 	"fmt"
-	"github.com/squishyent/osext"
 	"log/syslog"
 	"os"
 	"os/exec"
 	"os/signal"
+	"os/user"
 	"text/template"
+
+	"github.com/squishyent/osext"
 )
 
 const maxPathSize = 32 * 1024
 
-func newService(name, displayName, description, exePath string) (s *darwinLaunchdService, err error) {
+func newService(c *Config) (s *darwinLaunchdService, err error) {
 	s = &darwinLaunchdService{
-		name:        name,
-		displayName: displayName,
-		description: description,
-		exePath:     exePath,
+		Config: c,
 	}
 
-	s.logger, err = syslog.New(syslog.LOG_INFO, name)
+	s.logger, err = syslog.New(syslog.LOG_INFO, c.Name)
 	if err != nil {
 		return nil, err
 	}
@@ -29,17 +28,27 @@ func newService(name, displayName, description, exePath string) (s *darwinLaunch
 }
 
 type darwinLaunchdService struct {
-	name, displayName, description, exePath string
-	logger                                  *syslog.Writer
+	*Config
+	logger *syslog.Writer
 }
 
-func (s *darwinLaunchdService) getServiceFilePath() string {
-	return "/Library/LaunchDaemons/" + s.name + ".plist"
+func (s *darwinLaunchdService) getServiceFilePath() (string, error) {
+	if s.UserService {
+		u, err := user.Current()
+		if err != nil {
+			return "", err
+		}
+		return u.HomeDir + "/Library/LaunchAgents/" + s.Name + ".plist", nil
+	}
+	return "/Library/LaunchDaemons/" + s.Name + ".plist", nil
 }
 
 func (s *darwinLaunchdService) Install() error {
-	var confPath = s.getServiceFilePath()
-	_, err := os.Stat(confPath)
+	confPath, err := s.getServiceFilePath()
+	if err != nil {
+		return err
+	}
+	_, err = os.Stat(confPath)
 	if err == nil {
 		return fmt.Errorf("Init already exists: %s", confPath)
 	}
@@ -50,7 +59,7 @@ func (s *darwinLaunchdService) Install() error {
 	}
 	defer f.Close()
 
-	path := s.exePath
+	path := s.Config.ExePath
 	if path == "" {
 		path, err = osext.Executable()
 		if err != nil {
@@ -59,35 +68,52 @@ func (s *darwinLaunchdService) Install() error {
 	}
 
 	var to = &struct {
-		Name        string
-		Display     string
-		Description string
-		Path        string
+		*Config
+		Path string
+
+		KeepAlive, RunAtLoad bool
 	}{
-		s.name,
-		s.displayName,
-		s.description,
-		path,
+		Config:    s.Config,
+		Path:      path,
+		KeepAlive: s.KV.bool("KeepAlive", true),
+		RunAtLoad: s.KV.bool("RunAtLoad", false),
 	}
 
-	t := template.Must(template.New("launchdConfig").Parse(launchdConfig))
+	functions := template.FuncMap{
+		"bool": func(v bool) string {
+			if v {
+				return "true"
+			}
+			return "false"
+		},
+	}
+	t := template.Must(template.New("launchdConfig").Funcs(functions).Parse(launchdConfig))
 	return t.Execute(f, to)
 }
 
 func (s *darwinLaunchdService) Remove() error {
 	s.Stop()
 
-	confPath := s.getServiceFilePath()
+	confPath, err := s.getServiceFilePath()
+	if err != nil {
+		return err
+	}
 	return os.Remove(confPath)
 }
 
 func (s *darwinLaunchdService) Start() error {
-	confPath := s.getServiceFilePath()
+	confPath, err := s.getServiceFilePath()
+	if err != nil {
+		return err
+	}
 	cmd := exec.Command("launchctl", "load", confPath)
 	return cmd.Run()
 }
 func (s *darwinLaunchdService) Stop() error {
-	confPath := s.getServiceFilePath()
+	confPath, err := s.getServiceFilePath()
+	if err != nil {
+		return err
+	}
 	cmd := exec.Command("launchctl", "unload", confPath)
 	return cmd.Run()
 }
@@ -116,7 +142,8 @@ func (s *darwinLaunchdService) Warning(format string, a ...interface{}) error {
 	return s.logger.Warning(fmt.Sprintf(format, a...))
 }
 func (s *darwinLaunchdService) Info(format string, a ...interface{}) error {
-	return s.logger.Info(fmt.Sprintf(format, a...))
+	// On Darwin syslog.log defaults to loggint >= Notice (see /etc/asl.conf).
+	return s.logger.Notice(fmt.Sprintf(format, a...))
 }
 
 var launchdConfig = `<?xml version='1.0' encoding='UTF-8'?>
@@ -129,7 +156,8 @@ var launchdConfig = `<?xml version='1.0' encoding='UTF-8'?>
 <array>
         <string>{{.Path}}</string>
 </array>
-<key>KeepAlive</key><true/>
+<key>KeepAlive</key><{{bool .KeepAlive}}/>
+<key>RunAtLoad</key><{{bool .RunAtLoad}}/>
 <key>Disabled</key><false/>
 </dict>
 </plist>

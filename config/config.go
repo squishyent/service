@@ -5,12 +5,13 @@ package config
 
 import (
 	"encoding/json"
-	"github.com/squishyent/fsnotify"
-	"github.com/squishyent/osext"
 	"io"
 	"os"
 	"path/filepath"
 	"time"
+
+	"code.google.com/p/go.exp/fsnotify"
+	"github.com/squishyent/osext"
 )
 
 const DefaultPostfix = "_config.json"

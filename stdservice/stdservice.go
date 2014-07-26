@@ -17,8 +17,9 @@ package stdservice
 
 import (
 	"fmt"
-	"github.com/squishyent/service"
 	"os"
+
+	"github.com/squishyent/service"
 )
 
 // Standard service configuration. Start MUST block.

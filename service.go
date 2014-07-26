@@ -1,5 +1,5 @@
 // Package service provides a simple way to create a system service.
-// Currently supports Windows, Linux/Upstart, and OSX/Launchd.
+// Currently supports Windows, Linux/(systemd | Upstart | SysV), and OSX/Launchd.
 package service
 
 import "github.com/squishyent/osext"
@@ -9,7 +9,80 @@ import "github.com/squishyent/osext"
 // name. The description is an arbitrary string used to describe the
 // service. If exePath is empty, the path to the running binary will be used.
 func NewService(name, displayName, description, exePath string) (Service, error) {
-	return newService(name, displayName, description, exePath)
+	return newService(&Config{
+		Name:        name,
+		DisplayName: displayName,
+		Description: description,
+		ExePath:     exePath,
+	})
+}
+
+// Alpha API. Do not yet use.
+type Config struct {
+	Name, DisplayName, Description string
+	ExePath                        string
+
+	UserName  string   // Run as username.
+	Arguments []string // Run with arguments.
+
+	DependsOn        []string // Other services that this depends on.
+	WorkingDirectory string   // Service working directory.
+	ChRoot           string
+	UserService      bool // Install as a current user service.
+
+	// System specific parameters.
+	KV KeyValue
+}
+
+type KeyValue map[string]interface{}
+
+// Bool returns the value of the given name, assuming the value is a boolean.
+// If the value isn't found or is not of the type, the defaultValue is returned.
+func (kv KeyValue) bool(name string, defaultValue bool) bool {
+	if v, found := kv[name]; found {
+		if castValue, is := v.(bool); is {
+			return castValue
+		}
+	}
+	return defaultValue
+}
+
+// Int returns the value of the given name, assuming the value is an int.
+// If the value isn't found or is not of the type, the defaultValue is returned.
+func (kv KeyValue) int(name string, defaultValue int) int {
+	if v, found := kv[name]; found {
+		if castValue, is := v.(int); is {
+			return castValue
+		}
+	}
+	return defaultValue
+}
+
+// Int returns the value of the given name, assuming the value is a string.
+// If the value isn't found or is not of the type, the defaultValue is returned.
+func (kv KeyValue) string(name string, defaultValue string) string {
+	if v, found := kv[name]; found {
+		if castValue, is := v.(string); is {
+			return castValue
+		}
+	}
+	return defaultValue
+}
+
+// Int returns the value of the given name, assuming the value is a float64.
+// If the value isn't found or is not of the type, the defaultValue is returned.
+func (kv KeyValue) float64(name string, defaultValue float64) float64 {
+	if v, found := kv[name]; found {
+		if castValue, is := v.(float64); is {
+			return castValue
+		}
+	}
+	return defaultValue
+}
+
+// Alpha API. Do not yet use.
+func NewServiceConfig(c *Config) (Service, error) {
+	return newService(c)
 }
 
 // Represents a generic way to interact with the system's service.

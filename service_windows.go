@@ -1,26 +1,28 @@
 package service
 
 import (
+	"fmt"
+
 	"code.google.com/p/winsvc/eventlog"
 	"code.google.com/p/winsvc/mgr"
 	"code.google.com/p/winsvc/svc"
-	"fmt"
 	"github.com/squishyent/osext"
 )
 
-func newService(name, displayName, description, exePath string) (*windowsService, error) {
+func newService(c *Config) (*windowsService, error) {
 	return &windowsService{
-		name:        name,
-		displayName: displayName,
-		description: description,
-		exePath:     exePath,
+		name:        c.Name,
+		displayName: c.DisplayName,
+		description: c.Description,
+		exePath:     c.ExePath,
 	}, nil
 }
 
 type windowsService struct {
-	name, displayName, description, exePath string
-	onStart, onStop                         func() error
-	logger                                  *eventlog.Log
+	name, displayName, description string
+	exePath                        string
+	onStart, onStop                func() error
+	logger                         *eventlog.Log
 }
 
 func (ws *windowsService) Execute(args []string, r <-chan svc.ChangeRequest, changes chan<- svc.Status) (ssec bool, errno uint32) {

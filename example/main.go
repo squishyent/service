@@ -2,8 +2,10 @@ package main
 
 import (
 	"fmt"
-	"github.com/squishyent/service"
 	"os"
+	"time"
+
+	"github.com/squishyent/service"
 )
 
 var log service.Logger
@@ -72,10 +74,22 @@ func main() {
 	}
 }
 
+var exit = make(chan struct{})
+
 func doWork() {
 	log.Info("I'm Running!")
-	select {}
+	ticker := time.NewTicker(time.Minute)
+	for {
+		select {
+		case <-ticker.C:
+			log.Info("Still running...")
+		case <-exit:
+			ticker.Stop()
+			return
+		}
+	}
 }
 func stopWork() {
 	log.Info("I'm Stopping!")
+	exit <- struct{}{}
 }
