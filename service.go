@@ -114,6 +114,9 @@ type Installer interface {
 	// Removes this service from the system.  May return an
 	// error if this service is not already installed.
 	Remove() error
+
+	// Asks whether the service is already installed
+	IsInstalled() (bool, error)
 }
 
 // A service that implements ServiceController is able to

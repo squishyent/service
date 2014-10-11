@@ -101,6 +101,15 @@ func (s *darwinLaunchdService) Remove() error {
 	return os.Remove(confPath)
 }
 
+func (s *darwinLaunchdService) IsInstalled() (bool, error) {
+	path, err := s.getServiceFilePath()
+	if err != nil {
+		return false, err
+	}
+	_, err = os.Lstat(path)
+	return err == nil, nil
+}
+
 func (s *darwinLaunchdService) Start() error {
 	confPath, err := s.getServiceFilePath()
 	if err != nil {

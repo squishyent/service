@@ -116,6 +116,21 @@ func (ws *windowsService) Remove() error {
 	return nil
 }
 
+func (ws *windowsService) IsInstalled() (bool, error) {
+	m, err := mgr.Connect()
+	if err != nil {
+		return false, err
+	}
+	defer m.Disconnect()
+	s, err := m.OpenService(ws.name)
+	if err == nil {
+		s.Close()
+		return true, nil
+	} else {
+		return false, nil
+	}
+}
+
 func (ws *windowsService) Run(onStart, onStop func() error) error {
 	elog, err := eventlog.Open(ws.name)
 	if err != nil {

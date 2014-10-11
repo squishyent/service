@@ -177,6 +177,12 @@ func (s *linuxService) Remove() error {
 	return nil
 }
 
+func (s *linuxService) IsInstalled() (bool, error) {
+	confPath := s.flavor.ConfigPath(s.name)
+	_, err := os.Stat(confPath)
+	return err == nil, nil
+}
+
 func (s *linuxService) Run(onStart, onStop func() error) (err error) {
 	err = onStart()
 	if err != nil {
