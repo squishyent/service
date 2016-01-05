@@ -37,11 +37,13 @@ func newService(c *Config) (Service, error) {
 		exePath:     c.ExePath,
 	}
 
-	var err error
-	s.logger, err = syslog.New(syslog.LOG_INFO, s.name)
-	if err != nil {
-		return nil, err
-	}
+	// Sometimes the logger doesn't work, but we don't want that to stop us
+	s.logger, _ = syslog.New(syslog.LOG_INFO, s.name)
+	// var err error
+	// s.logger, err = syslog.New(syslog.LOG_INFO, s.name)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
 	return s, nil
 }
@@ -222,12 +224,21 @@ func (s *linuxService) Stop() error {
 }
 
 func (s *linuxService) Error(format string, a ...interface{}) error {
+	if s.logger == nil {
+		return nil
+	}
 	return s.logger.Err(fmt.Sprintf(format, a...))
 }
 func (s *linuxService) Warning(format string, a ...interface{}) error {
+	if s.logger == nil {
+		return nil
+	}
 	return s.logger.Warning(fmt.Sprintf(format, a...))
 }
 func (s *linuxService) Info(format string, a ...interface{}) error {
+	if s.logger == nil {
+		return nil
+	}
 	return s.logger.Info(fmt.Sprintf(format, a...))
 }
 
